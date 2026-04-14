@@ -8,8 +8,8 @@ const storage = {
 };
 
 // ─── Constants ───
-const WEBHOOK_URL = "https://n8n.srv1042888.hstgr.cloud/webhook-test/apply";
-const VERIFY_WEBHOOK = "https://n8n.srv1042888.hstgr.cloud/webhook-test/send-otp";
+const WEBHOOK_URL = "https://n8n.srv1042888.hstgr.cloud/webhook/apply";
+const VERIFY_WEBHOOK = "https://n8n.srv1042888.hstgr.cloud/webhook/send-otp";
 
 const JOBS = [{
   id: "ai-engineer-quant", title: "AI Engineer", subtitle: "Quantitative Finance",
