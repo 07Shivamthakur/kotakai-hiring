@@ -89,7 +89,7 @@ const S = {
   sectionLabel: { fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.2em", color: "#555", marginBottom: "32px" },
   stepDot: (a, c) => ({ width: c ? "24px" : a ? "32px" : "24px", height: "3px", background: c || a ? "#E8E8E3" : "rgba(255,255,255,0.1)", transition: "all 0.3s" }),
   timer: u => ({ fontSize: "32px", fontFamily: font, color: u ? "#FF4444" : "#E8E8E3", fontWeight: 600, textAlign: "center", marginBottom: "32px", fontVariantNumeric: "tabular-nums" }),
-  gameOpt: (sel, cor, rev) => ({ padding: "16px 20px", width: "100%", display: "block", textAlign: "left", background: rev ? (cor ? "rgba(16,185,129,0.15)" : sel ? "rgba(239,68,68,0.15)" : "transparent") : sel ? "rgba(255,255,255,0.08)" : "transparent", border: rev ? (cor ? "1px solid rgba(16,185,129,0.4)" : sel ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(255,255,255,0.08)") : sel ? "1px solid rgba(255,255,255,0.3)" : "1px solid rgba(255,255,255,0.08)", color: "#E8E8E3", cursor: "pointer", fontFamily: font, fontSize: "14px" }),
+  gameOpt: (sel) => ({ padding: "16px 20px", width: "100%", display: "block", textAlign: "left", background: sel ? "rgba(255,255,255,0.08)" : "transparent", border: sel ? "1px solid rgba(255,255,255,0.3)" : "1px solid rgba(255,255,255,0.08)", color: "#E8E8E3", cursor: "pointer", fontFamily: font, fontSize: "14px" }),
   codeBlock: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "20px", fontFamily: font, fontSize: "13px", lineHeight: 1.7, color: "#AAA", whiteSpace: "pre-wrap", marginBottom: "24px", overflowX: "auto" },
   scoreCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", padding: "24px", textAlign: "center" },
   pStep: st => ({ display: "flex", alignItems: "center", gap: "8px", padding: "12px 20px", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.1em", color: st === "done" ? "#10B981" : st === "now" ? "#E8E8E3" : "#444", fontFamily: font }),
@@ -150,12 +150,10 @@ function GameSection({ scores, setScores, phase, setPhase }) {
     <div style={{ fontSize: "11px", color: "#444", marginTop: "12px" }}>Timer cannot be paused once started.</div>
   </div>);
 
-  if (phase === "summary") { const t = scores.pattern + scores.math + scores.debug; return (<div>
-    <h3 style={{ fontFamily: displayFont, fontSize: "28px", marginBottom: "32px", fontWeight: 400 }}>Assessment Complete</h3>
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", marginBottom: "32px" }}>
-      {[["Pattern",scores.pattern],["Math",scores.math],["Debug",scores.debug]].map(([n,s])=><div key={n} style={S.scoreCard}><div style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.15em",color:"#555",marginBottom:"12px"}}>{n}</div><div style={{fontSize:"28px",fontFamily:font}}>{s}<span style={{fontSize:"14px",color:"#555"}}>/100</span></div></div>)}
-    </div>
-    <div style={{textAlign:"center",padding:"24px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)"}}><div style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.15em",color:"#555",marginBottom:"8px"}}>Total</div><div style={{fontSize:"36px",fontFamily:font}}>{t}<span style={{fontSize:"16px",color:"#555"}}>/300</span></div></div>
+  if (phase === "summary") { return (<div style={{textAlign:"center",paddingTop:"40px"}}>
+    <div style={{fontSize:"48px",marginBottom:"24px",opacity:0.5}}>✓</div>
+    <h3 style={{ fontFamily: displayFont, fontSize: "28px", marginBottom: "16px", fontWeight: 400 }}>Assessment Complete</h3>
+    <p style={{fontSize:"14px",color:"#888",fontFamily:displayFont,lineHeight:1.7,maxWidth:"400px",margin:"0 auto"}}>All 3 challenges have been completed. Your responses have been recorded and will be evaluated as part of your application.</p>
   </div>); }
 
   const q = qs[qIdx]; if (!q) return null;
@@ -166,7 +164,7 @@ function GameSection({ scores, setScores, phase, setPhase }) {
     {phase === "debug" && <div style={S.codeBlock}>{q.code}</div>}
     {phase === "pattern" && <div style={{textAlign:"center",marginBottom:"32px"}}><div style={{display:"flex",justifyContent:"center",gap:"16px",fontSize:"24px",fontFamily:font}}>{q.sequence.map((n,i)=><span key={i} style={{color:n==="?"?"#3B82F6":"#E8E8E3",padding:"8px 16px",background:n==="?"?"rgba(59,130,246,0.1)":"rgba(255,255,255,0.03)",border:`1px solid ${n==="?"?"rgba(59,130,246,0.3)":"rgba(255,255,255,0.06)"}`}}>{n}</span>)}</div></div>}
     {(phase==="math"||phase==="debug") && <div style={{fontSize:"15px",lineHeight:1.7,fontFamily:displayFont,marginBottom:"28px",color:"#CCC"}}>{q.question}</div>}
-    <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>{q.options.map(o=><button key={o} style={S.gameOpt(sel===o,q.answer===o,sel!==null)} onClick={()=>answer(o)} disabled={sel!==null}>{o}</button>)}</div>
+    <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>{q.options.map(o=><button key={o} style={S.gameOpt(sel===o)} onClick={()=>answer(o)} disabled={sel!==null}>{o}</button>)}</div>
   </div>);
 }
 
@@ -360,7 +358,7 @@ export default function App() {
 
           {appStep===4&&!submitted&&<div>
             <h3 style={{fontFamily:displayFont,fontSize:"28px",marginBottom:"32px",fontWeight:400}}>Review & Submit</h3>
-            {[["Personal",`${user?.name} · ${user?.email} · ${appData.education} · ${appData.experience}`],["Technical",`AI/ML: ${appData.aiAnswer.slice(0,80)}... · HFT: ${appData.hftLevel} · Skills: ${appData.techStack.join(", ")}`],["Resume",appData.resumeName||"None"],["Games",`Pattern: ${gameScores.pattern} · Math: ${gameScores.math} · Debug: ${gameScores.debug} · Total: ${gameScores.pattern+gameScores.math+gameScores.debug}/300`]].map(([l,v])=><div key={l} style={{borderTop:"1px solid rgba(255,255,255,0.06)",padding:"20px 0"}}><div style={S.sectionLabel}>{l}</div><div style={{fontSize:"13px",color:"#AAA",lineHeight:1.7}}>{v}</div></div>)}
+            {[["Personal",`${user?.name} · ${user?.email} · ${appData.education} · ${appData.experience}`],["Technical",`AI/ML: ${appData.aiAnswer.slice(0,80)}... · HFT: ${appData.hftLevel} · Skills: ${appData.techStack.join(", ")}`],["Resume",appData.resumeName||"None"],["Assessment","All 3 challenges completed"]].map(([l,v])=><div key={l} style={{borderTop:"1px solid rgba(255,255,255,0.06)",padding:"20px 0"}}><div style={S.sectionLabel}>{l}</div><div style={{fontSize:"13px",color:"#AAA",lineHeight:1.7}}>{v}</div></div>)}
             <Spacer h={24}/><button style={{...S.primaryBtn,opacity:submitting?0.5:1}} onClick={submit} disabled={submitting}>{submitting?"Submitting...":"Submit Application →"}</button>
           </div>}
 
@@ -392,7 +390,7 @@ export default function App() {
           <div style={{display:"flex",alignItems:"center",margin:"40px 0",flexWrap:"wrap"}}>{steps.map((s,i)=><div key={s} style={{display:"flex",alignItems:"center"}}><div style={S.pStep(i<cs?"done":i===cs?"now":"wait")}><span>{i<cs?"✓":String(i+1).padStart(2,"0")}</span><span>{s}</span></div>{i<steps.length-1&&<div style={S.pLine(i<cs)}/>}</div>)}</div>
           <Spacer h={32}/>
           <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",padding:"32px"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:"20px"}}><div style={S.sectionLabel}>Status</div><div style={S.badge(appStatus?.status||"PROCESSING")}>{(appStatus?.status||"PROCESSING").replace("_"," ")}</div></div><p style={{fontSize:"15px",color:"#AAA",lineHeight:1.7,fontFamily:displayFont}}>{msgs[appStatus?.status]||msgs.PROCESSING}</p></div>
-          {appStatus?.gameScores&&<><Spacer h={32}/><div style={S.sectionLabel}>Scores</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>{[["Pattern",appStatus.gameScores.pattern],["Math",appStatus.gameScores.math],["Debug",appStatus.gameScores.debug]].map(([n,s])=><div key={n} style={S.scoreCard}><div style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.15em",color:"#555",marginBottom:"8px"}}>{n}</div><div style={{fontSize:"22px",fontFamily:font}}>{s}<span style={{fontSize:"12px",color:"#555"}}>/100</span></div></div>)}</div></>}
+          {appStatus?.gameScores&&<><Spacer h={32}/><div style={S.sectionLabel}>Assessment</div><div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",padding:"20px"}}><span style={{fontSize:"13px",color:"#888"}}>Cognitive assessment completed</span></div></>}
         </div></div>;
       })()}
 
