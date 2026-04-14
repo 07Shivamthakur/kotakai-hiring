@@ -1,13 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-// ─── Storage adapter ───
 const storage = {
   async get(key) { const v = localStorage.getItem(key); return v ? { key, value: v } : null; },
   async set(key, value) { localStorage.setItem(key, value); return { key, value }; },
   async delete(key) { localStorage.removeItem(key); return { key, deleted: true }; }
 };
 
-// ─── Constants ───
 const WEBHOOK_URL = "https://n8n.srv1042888.hstgr.cloud/webhook/apply";
 const VERIFY_WEBHOOK = "https://n8n.srv1042888.hstgr.cloud/webhook/send-otp";
 
@@ -76,12 +74,12 @@ const STEPS = ["Personal", "Technical", "Resume", "Assessment", "Review"];
 const font = "'JetBrains Mono', 'SF Mono', monospace";
 const displayFont = "'Instrument Serif', Georgia, serif";
 
-// ─── Styles ───
 const S = {
   input: { width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#E8E8E3", padding: "14px 16px", fontSize: "14px", fontFamily: font, outline: "none", boxSizing: "border-box" },
   inputLabel: { fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.15em", color: "#666", marginBottom: "8px", display: "block" },
   inputGroup: { marginBottom: "20px" },
   primaryBtn: { width: "100%", background: "#E8E8E3", color: "#0A0A0A", border: "none", padding: "14px", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.15em", fontFamily: font, cursor: "pointer", fontWeight: 600, marginTop: "12px" },
+  dangerBtn: { width: "100%", background: "transparent", color: "#EF4444", border: "1px solid rgba(239,68,68,0.3)", padding: "14px", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.15em", fontFamily: font, cursor: "pointer", fontWeight: 600, marginTop: "12px" },
   link: { color: "#888", fontSize: "12px", cursor: "pointer", background: "none", border: "none", fontFamily: font, textDecoration: "underline", textUnderlineOffset: "3px", padding: 0 },
   select: { width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#E8E8E3", padding: "14px 16px", fontSize: "14px", fontFamily: font, outline: "none", appearance: "none", boxSizing: "border-box", cursor: "pointer" },
   textarea: { width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#E8E8E3", padding: "14px 16px", fontSize: "14px", fontFamily: font, outline: "none", resize: "vertical", minHeight: "120px", lineHeight: 1.6, boxSizing: "border-box" },
@@ -92,15 +90,14 @@ const S = {
   gameOpt: (sel) => ({ padding: "16px 20px", width: "100%", display: "block", textAlign: "left", background: sel ? "rgba(255,255,255,0.08)" : "transparent", border: sel ? "1px solid rgba(255,255,255,0.3)" : "1px solid rgba(255,255,255,0.08)", color: "#E8E8E3", cursor: "pointer", fontFamily: font, fontSize: "14px" }),
   codeBlock: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "20px", fontFamily: font, fontSize: "13px", lineHeight: 1.7, color: "#AAA", whiteSpace: "pre-wrap", marginBottom: "24px", overflowX: "auto" },
   scoreCard: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", padding: "24px", textAlign: "center" },
-  pStep: st => ({ display: "flex", alignItems: "center", gap: "8px", padding: "12px 20px", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.1em", color: st === "done" ? "#10B981" : st === "now" ? "#E8E8E3" : "#444", fontFamily: font }),
-  pLine: c => ({ width: "40px", height: "1px", background: c ? "#10B981" : "rgba(255,255,255,0.1)" }),
-  badge: status => { const m = { SHORTLISTED: ["rgba(16,185,129,0.1)","rgba(16,185,129,0.3)","#10B981"], UNDER_REVIEW: ["rgba(245,158,11,0.1)","rgba(245,158,11,0.3)","#F59E0B"], REJECTED: ["rgba(255,255,255,0.03)","rgba(255,255,255,0.1)","#888"], PROCESSING: ["rgba(59,130,246,0.1)","rgba(59,130,246,0.3)","#3B82F6"] }; const c = m[status]||m.PROCESSING; return { padding: "8px 20px", background: c[0], border: `1px solid ${c[1]}`, color: c[2], fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.15em", fontFamily: font, display: "inline-block" }; },
+  pStep: st => ({ display: "flex", alignItems: "center", gap: "8px", padding: "12px 16px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.1em", color: st === "done" ? "#10B981" : st === "now" ? "#E8E8E3" : "#444", fontFamily: font }),
+  pLine: c => ({ width: "24px", height: "1px", background: c ? "#10B981" : "rgba(255,255,255,0.1)", flexShrink: 0 }),
+  badge: status => { const m = { SHORTLISTED: ["rgba(16,185,129,0.1)","rgba(16,185,129,0.3)","#10B981"], UNDER_REVIEW: ["rgba(245,158,11,0.1)","rgba(245,158,11,0.3)","#F59E0B"], REJECTED: ["rgba(255,255,255,0.03)","rgba(255,255,255,0.1)","#888"], PROCESSING: ["rgba(59,130,246,0.1)","rgba(59,130,246,0.3)","#3B82F6"], WITHDRAWN: ["rgba(239,68,68,0.1)","rgba(239,68,68,0.3)","#EF4444"] }; const c = m[status]||m.PROCESSING; return { padding: "8px 20px", background: c[0], border: `1px solid ${c[1]}`, color: c[2], fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.15em", fontFamily: font, display: "inline-block" }; },
   errorText: { color: "#EF4444", fontSize: "11px", marginTop: "4px" }
 };
 
 const Spacer = ({ h }) => <div style={{ height: h }} />;
 
-// ─── GameTimer (outside App) ───
 function GameTimer({ seconds, total }) {
   const pct = seconds / total, urgent = pct < 0.2;
   return (<div>
@@ -109,7 +106,6 @@ function GameTimer({ seconds, total }) {
   </div>);
 }
 
-// ─── GameSection (outside App) ───
 function GameSection({ scores, setScores, phase, setPhase }) {
   const [qIdx, setQIdx] = useState(0);
   const [sel, setSel] = useState(null);
@@ -150,11 +146,11 @@ function GameSection({ scores, setScores, phase, setPhase }) {
     <div style={{ fontSize: "11px", color: "#444", marginTop: "12px" }}>Timer cannot be paused once started.</div>
   </div>);
 
-  if (phase === "summary") { return (<div style={{textAlign:"center",paddingTop:"40px"}}>
+  if (phase === "summary") return (<div style={{textAlign:"center",paddingTop:"40px"}}>
     <div style={{fontSize:"48px",marginBottom:"24px",opacity:0.5}}>✓</div>
     <h3 style={{ fontFamily: displayFont, fontSize: "28px", marginBottom: "16px", fontWeight: 400 }}>Assessment Complete</h3>
     <p style={{fontSize:"14px",color:"#888",fontFamily:displayFont,lineHeight:1.7,maxWidth:"400px",margin:"0 auto"}}>All 3 challenges have been completed. Your responses have been recorded and will be evaluated as part of your application.</p>
-  </div>); }
+  </div>);
 
   const q = qs[qIdx]; if (!q) return null;
   const gn = phase === "pattern" ? "Pattern Recognition" : phase === "math" ? "Math & Logic" : "Code Debugging";
@@ -162,7 +158,7 @@ function GameSection({ scores, setScores, phase, setPhase }) {
     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}><div style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.2em", color: "#555" }}>{gn}</div><div style={{ fontSize: "12px", color: "#555" }}>{qIdx+1}/5</div></div>
     <GameTimer seconds={time} total={tt} />
     {phase === "debug" && <div style={S.codeBlock}>{q.code}</div>}
-    {phase === "pattern" && <div style={{textAlign:"center",marginBottom:"32px"}}><div style={{display:"flex",justifyContent:"center",gap:"16px",fontSize:"24px",fontFamily:font}}>{q.sequence.map((n,i)=><span key={i} style={{color:n==="?"?"#3B82F6":"#E8E8E3",padding:"8px 16px",background:n==="?"?"rgba(59,130,246,0.1)":"rgba(255,255,255,0.03)",border:`1px solid ${n==="?"?"rgba(59,130,246,0.3)":"rgba(255,255,255,0.06)"}`}}>{n}</span>)}</div></div>}
+    {phase === "pattern" && <div style={{textAlign:"center",marginBottom:"32px"}}><div style={{display:"flex",justifyContent:"center",gap:"12px",fontSize:"20px",fontFamily:font,flexWrap:"wrap"}}>{q.sequence.map((n,i)=><span key={i} style={{color:n==="?"?"#3B82F6":"#E8E8E3",padding:"8px 14px",background:n==="?"?"rgba(59,130,246,0.1)":"rgba(255,255,255,0.03)",border:`1px solid ${n==="?"?"rgba(59,130,246,0.3)":"rgba(255,255,255,0.06)"}`}}>{n}</span>)}</div></div>}
     {(phase==="math"||phase==="debug") && <div style={{fontSize:"15px",lineHeight:1.7,fontFamily:displayFont,marginBottom:"28px",color:"#CCC"}}>{q.question}</div>}
     <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>{q.options.map(o=><button key={o} style={S.gameOpt(sel===o)} onClick={()=>answer(o)} disabled={sel!==null}>{o}</button>)}</div>
   </div>);
@@ -170,9 +166,7 @@ function GameSection({ scores, setScores, phase, setPhase }) {
 
 function fileToBase64(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); }); }
 
-// ═══════════════════════════════════════
-// MAIN APP
-// ═══════════════════════════════════════
+// ═══ MAIN APP ═══
 export default function App() {
   const [page, setPage] = useState("home");
   const [selectedJob, setSelectedJob] = useState(null);
@@ -194,7 +188,9 @@ export default function App() {
   const [applicationId, setApplicationId] = useState("");
   const [appStatus, setAppStatus] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const [withdrawConfirm, setWithdrawConfirm] = useState(false);
   const fileRef = useRef(null);
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   useEffect(() => { (async () => { try { const u = await storage.get("currentUser"); if (u) { const p = JSON.parse(u.value); setUser(p); try { const s = await storage.get(`status_${p.email}`); if (s) setAppStatus(JSON.parse(s.value)); } catch {} } } catch {} })(); }, []);
 
@@ -215,15 +211,25 @@ export default function App() {
     if (otpCode !== sentOtp) { setAuthError("Invalid code"); return; }
     const ud = { name: authForm.name, email: authForm.email, phone: authForm.phone, verified: true };
     await storage.set(`user_${authForm.email}`, JSON.stringify({ ...ud, password: authForm.password }));
+    if (authForm.phone) await storage.set(`phone_${authForm.phone.replace(/[^0-9]/g, '')}`, authForm.email);
     await storage.set("currentUser", JSON.stringify(ud));
     setUser(ud); setVerifyStep(false); setOtpCode(""); setPage("apply");
   };
 
   const signIn = async () => {
     setAuthError("");
-    if (!authForm.email || !authForm.password) { setAuthError("Email and password required"); return; }
+    const loginId = authForm.email;
+    if (!loginId || !authForm.password) { setAuthError("Email/phone and password required"); return; }
+    let email = loginId;
+    if (!loginId.includes("@")) {
+      try {
+        const phoneKey = loginId.replace(/[^0-9]/g, '');
+        const mapped = await storage.get(`phone_${phoneKey}`);
+        if (mapped) { email = mapped.value; } else { setAuthError("No account found with this phone number"); return; }
+      } catch { setAuthError("No account found with this phone number"); return; }
+    }
     try {
-      const r = await storage.get(`user_${authForm.email}`);
+      const r = await storage.get(`user_${email}`);
       if (!r) { setAuthError("Account not found"); return; }
       const p = JSON.parse(r.value);
       if (p.password !== authForm.password) { setAuthError("Wrong password"); return; }
@@ -237,7 +243,18 @@ export default function App() {
   const signOut = async () => { try { await storage.delete("currentUser"); } catch {} setUser(null); setAppStatus(null); setPage("home"); };
   const openJob = j => { setSelectedJob(j); setTimeout(() => setDetailOpen(true), 10); };
   const closeJob = () => { setDetailOpen(false); setTimeout(() => setSelectedJob(null), 500); };
-  const startApply = () => { closeJob(); if (!user) setTimeout(() => setPage("signup"), 500); else setTimeout(() => { setPage("apply"); setAppStep(0); }, 500); };
+  const startApply = () => {
+    closeJob();
+    if (!user) { setTimeout(() => setPage("signup"), 500); return; }
+    if (appStatus && appStatus.status !== "WITHDRAWN") { setTimeout(() => setPage("status"), 500); return; }
+    setTimeout(() => { setPage("apply"); setAppStep(0); }, 500);
+  };
+  const withdrawApplication = async () => {
+    if (!user || !appStatus) return;
+    const updated = { ...appStatus, status: "WITHDRAWN", withdrawnAt: new Date().toISOString() };
+    try { await storage.set(`status_${user.email}`, JSON.stringify(updated)); } catch {}
+    setAppStatus(updated); setWithdrawConfirm(false);
+  };
   const resetAuth = () => { setAuthError(""); setVerifyStep(false); setOtpCode(""); setAuthForm({ name: "", email: "", phone: "", password: "", confirmPassword: "" }); };
   const handleFile = f => { if (f?.type === "application/pdf") setAppData(p => ({ ...p, resumeFile: f, resumeName: f.name })); };
   const canNext = () => { if (appStep===0) return appData.education&&appData.experience&&appData.source; if (appStep===1) return appData.aiAnswer.length>=50&&appData.quantAnswer.length>=50&&appData.hftLevel; if (appStep===2) return appData.resumeFile; if (appStep===3) return gamePhase==="summary"; return true; };
@@ -254,59 +271,71 @@ export default function App() {
     setAppStatus(sd); setSubmitted(true); setSubmitting(false);
   };
 
-  // ═══ RENDER ═══
+  const mp = isMobile ? "20px" : "40px"; // mobile padding
+
   return (
     <div style={{ background: "#0A0A0A", color: "#E8E8E3", minHeight: "100vh", fontFamily: font, fontSize: "13px", letterSpacing: "0.02em" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600&display=swap');*{margin:0;padding:0;box-sizing:border-box}body{background:#0A0A0A}::selection{background:rgba(59,130,246,0.3);color:#fff}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:3px}select option{background:#1a1a1a;color:#E8E8E3}input:focus,select:focus,textarea:focus{border-color:rgba(255,255,255,0.25)!important}button:hover{opacity:0.85}`}</style>
 
       {/* NAV */}
-      {!["signup","signin","apply"].includes(page) && <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:100,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"20px 40px",background:"rgba(10,10,10,0.9)",backdropFilter:"blur(20px)",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:"16px"}}><button style={{fontFamily:displayFont,fontSize:"28px",fontWeight:400,color:"#E8E8E3",cursor:"pointer",background:"none",border:"none"}} onClick={()=>{setPage("home");closeJob();}}>Kotak</button><span style={{fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.15em",color:"#555"}}>Quant</span></div>
-        <div style={{display:"flex",alignItems:"center",gap:"24px"}}>{user?<><button style={{color:"#888",cursor:"pointer",background:"none",border:"none",fontFamily:font,fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.15em",padding:0}} onClick={()=>appStatus&&setPage("status")}>Status</button><span style={{color:"#555",fontSize:"11px"}}>{user.name.split(" ")[0]}</span><button style={{color:"#E8E8E3",background:"none",border:"1px solid rgba(255,255,255,0.2)",padding:"8px 20px",cursor:"pointer",fontFamily:font,fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.15em"}} onClick={signOut}>Sign Out</button></>:<><button style={{color:"#888",cursor:"pointer",background:"none",border:"none",fontFamily:font,fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.15em",padding:0}} onClick={()=>{setPage("signin");resetAuth();}}>Sign In</button><button style={{color:"#E8E8E3",background:"none",border:"1px solid rgba(255,255,255,0.2)",padding:"8px 20px",cursor:"pointer",fontFamily:font,fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.15em"}} onClick={()=>{setPage("signup");resetAuth();}}>Apply</button></>}</div>
+      {!["signup","signin","apply"].includes(page) && <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:100,display:"flex",justifyContent:"space-between",alignItems:"center",padding:isMobile?"16px 20px":"20px 40px",background:"rgba(10,10,10,0.9)",backdropFilter:"blur(20px)",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:"12px"}}><button style={{fontFamily:displayFont,fontSize:isMobile?"22px":"28px",fontWeight:400,color:"#E8E8E3",cursor:"pointer",background:"none",border:"none"}} onClick={()=>{setPage("home");closeJob();}}>Kotak</button><span style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.15em",color:"#555"}}>Quant</span></div>
+        <div style={{display:"flex",alignItems:"center",gap:isMobile?"12px":"24px"}}>{user?<>
+          <button style={{color:"#888",cursor:"pointer",background:"none",border:"none",fontFamily:font,fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.1em",padding:0}} onClick={()=>appStatus&&setPage("status")}>Status</button>
+          {!isMobile&&<span style={{color:"#555",fontSize:"11px"}}>{user.name.split(" ")[0]}</span>}
+          <button style={{color:"#E8E8E3",background:"none",border:"1px solid rgba(255,255,255,0.2)",padding:"6px 14px",cursor:"pointer",fontFamily:font,fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.1em"}} onClick={signOut}>Sign Out</button>
+        </>:<>
+          <button style={{color:"#888",cursor:"pointer",background:"none",border:"none",fontFamily:font,fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.1em",padding:0}} onClick={()=>{setPage("signin");resetAuth();}}>Sign In</button>
+          <button style={{color:"#E8E8E3",background:"none",border:"1px solid rgba(255,255,255,0.2)",padding:"6px 14px",cursor:"pointer",fontFamily:font,fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.1em"}} onClick={()=>{setPage("signup");resetAuth();}}>Apply</button>
+        </>}</div>
       </nav>}
 
       {/* HOME */}
       {page==="home"&&<div>
-        <div style={{padding:"180px 40px 60px",maxWidth:"900px"}}><h1 style={{fontFamily:displayFont,fontSize:"clamp(48px,8vw,96px)",fontWeight:400,lineHeight:1.05,color:"#E8E8E3",marginBottom:"24px",letterSpacing:"-0.03em"}}>Where AI<br/>meets markets.</h1><p style={{fontSize:"15px",color:"#888",lineHeight:1.7,maxWidth:"560px"}}>Join our quantitative trading team. Build ML systems that generate alpha, optimize execution, and move billions — in milliseconds.</p></div>
-        <div style={{padding:"0 40px 120px"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:"20px"}}><div style={S.sectionLabel}>Current Openings</div><div style={{display:"flex",gap:"16px"}}><button style={{padding:"6px 16px",fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.12em",background:"#E8E8E3",color:"#0A0A0A",border:"1px solid #E8E8E3",cursor:"pointer",fontFamily:font}}>All</button><button style={{padding:"6px 16px",fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.12em",background:"transparent",color:"#888",border:"1px solid rgba(255,255,255,0.15)",cursor:"pointer",fontFamily:font}}>Mumbai</button></div></div>
-          {JOBS.map(j=><div key={j.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"20px 0",borderTop:"1px solid rgba(255,255,255,0.08)",cursor:"pointer",background:hoveredJob===j.id?"rgba(255,255,255,0.02)":"transparent"}} onMouseEnter={()=>setHoveredJob(j.id)} onMouseLeave={()=>setHoveredJob(null)} onClick={()=>openJob(j)}><div><div style={{fontSize:"18px",fontFamily:displayFont,fontWeight:400}}>{j.title} — {j.subtitle}</div><div style={{fontSize:"12px",color:"#555",marginTop:"4px"}}>{j.department} · {j.experience}</div></div><div style={{display:"flex",alignItems:"center",gap:"24px"}}><span style={{fontSize:"14px",color:"#888",fontFamily:displayFont}}>{j.location}</span><span style={{fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.15em",color:"#E8E8E3",border:"1px solid rgba(255,255,255,0.3)",padding:"8px 20px",opacity:hoveredJob===j.id?1:0,transition:"opacity 0.2s",background:"none",fontFamily:font}}>Apply ↗</span></div></div>)}
+        <div style={{padding:isMobile?`140px ${mp} 40px`:`180px ${mp} 60px`,maxWidth:"900px"}}><h1 style={{fontFamily:displayFont,fontSize:isMobile?"42px":"clamp(48px,8vw,96px)",fontWeight:400,lineHeight:1.05,color:"#E8E8E3",marginBottom:"24px",letterSpacing:"-0.03em"}}>Where AI<br/>meets markets.</h1><p style={{fontSize:isMobile?"14px":"15px",color:"#888",lineHeight:1.7,maxWidth:"560px"}}>Join our quantitative trading team. Build ML systems that generate alpha, optimize execution, and move billions — in milliseconds.</p></div>
+        <div style={{padding:`0 ${mp} 120px`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:isMobile?"flex-start":"flex-end",marginBottom:"20px",flexDirection:isMobile?"column":"row",gap:"16px"}}><div style={S.sectionLabel}>Current Openings</div><div style={{display:"flex",gap:"12px"}}><button style={{padding:"6px 14px",fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.12em",background:"#E8E8E3",color:"#0A0A0A",border:"1px solid #E8E8E3",cursor:"pointer",fontFamily:font}}>All</button><button style={{padding:"6px 14px",fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.12em",background:"transparent",color:"#888",border:"1px solid rgba(255,255,255,0.15)",cursor:"pointer",fontFamily:font}}>Mumbai</button></div></div>
+          {JOBS.map(j=><div key={j.id} style={{display:"flex",justifyContent:"space-between",alignItems:isMobile?"flex-start":"center",padding:"20px 0",borderTop:"1px solid rgba(255,255,255,0.08)",cursor:"pointer",background:hoveredJob===j.id?"rgba(255,255,255,0.02)":"transparent",flexDirection:isMobile?"column":"row",gap:isMobile?"12px":"0"}} onMouseEnter={()=>setHoveredJob(j.id)} onMouseLeave={()=>setHoveredJob(null)} onClick={()=>openJob(j)}>
+            <div><div style={{fontSize:isMobile?"16px":"18px",fontFamily:displayFont,fontWeight:400}}>{j.title} — {j.subtitle}</div><div style={{fontSize:"12px",color:"#555",marginTop:"4px"}}>{j.department} · {j.experience}</div></div>
+            <div style={{display:"flex",alignItems:"center",gap:"16px"}}><span style={{fontSize:"14px",color:"#888",fontFamily:displayFont}}>{j.location}</span>{!isMobile&&<span style={{fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.15em",color:"#E8E8E3",border:"1px solid rgba(255,255,255,0.3)",padding:"8px 20px",opacity:hoveredJob===j.id?1:0,transition:"opacity 0.2s",background:"none",fontFamily:font}}>Apply ↗</span>}</div>
+          </div>)}
           <div style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}/>
           <Spacer h={80}/><div style={S.sectionLabel}>Why Kotak Quant</div>
-          {[["01","Real alpha generation","Your models directly impact trading P&L."],["02","Sub-millisecond latency","Where every microsecond matters."],["03","World-class team","PhDs in math, physics, and CS."],["04","AI-first culture","Heavy investment in ML infrastructure."],["05","Competitive compensation","Top-of-market pay + bonuses."],["06","Hybrid flexibility","Mumbai HQ, flexible arrangements."]].map(([n,t,d])=><div key={n} style={{display:"flex",gap:"40px",padding:"24px 0",borderTop:"1px solid rgba(255,255,255,0.04)"}}><span style={{fontSize:"12px",color:"#333",fontFamily:font,minWidth:"28px"}}>{n}</span><div><div style={{fontSize:"16px",fontFamily:displayFont,marginBottom:"6px"}}>{t}</div><div style={{fontSize:"14px",color:"#666",fontFamily:displayFont}}>{d}</div></div></div>)}
+          {[["01","Real alpha generation","Your models directly impact trading P&L."],["02","Sub-millisecond latency","Where every microsecond matters."],["03","World-class team","PhDs in math, physics, and CS."],["04","AI-first culture","Heavy investment in ML infrastructure."],["05","Competitive compensation","Top-of-market pay + bonuses."],["06","Hybrid flexibility","Mumbai HQ, flexible arrangements."]].map(([n,t,d])=><div key={n} style={{display:"flex",gap:isMobile?"20px":"40px",padding:"24px 0",borderTop:"1px solid rgba(255,255,255,0.04)"}}><span style={{fontSize:"12px",color:"#333",fontFamily:font,minWidth:"28px"}}>{n}</span><div><div style={{fontSize:"16px",fontFamily:displayFont,marginBottom:"6px"}}>{t}</div><div style={{fontSize:"14px",color:"#666",fontFamily:displayFont}}>{d}</div></div></div>)}
         </div>
       </div>}
 
       {/* JOB DETAIL */}
-      {selectedJob&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:200,display:"flex",pointerEvents:detailOpen?"all":"none"}}>
-        <div style={{width:"45%",background:"#060606",transition:"opacity 0.5s",opacity:detailOpen?1:0,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{fontFamily:displayFont,fontSize:"64px",color:"rgba(255,255,255,0.03)"}}>K</div></div>
-        <div style={{width:"55%",background:"#0F0F0F",overflowY:"auto",transform:detailOpen?"translateX(0)":"translateX(100%)",transition:"transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94)",padding:"40px 60px 80px",position:"relative"}}>
-          <button style={{position:"absolute",top:"24px",right:"24px",background:"none",border:"1px solid rgba(255,255,255,0.2)",color:"#E8E8E3",width:"40px",height:"40px",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:"18px",zIndex:10,fontFamily:font}} onClick={closeJob}>✕</button>
-          <button style={{position:"absolute",top:"24px",right:"80px",background:"none",border:"1px solid rgba(255,255,255,0.3)",color:"#E8E8E3",padding:"12px 28px",cursor:"pointer",fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:font,zIndex:10}} onClick={startApply}>Apply for Role ↓</button>
-          <div style={{fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.15em",color:"#888",marginBottom:"48px",display:"flex",gap:"24px"}}><span>{selectedJob.location}</span><span>{selectedJob.department}</span></div>
-          <h2 style={{fontFamily:displayFont,fontSize:"42px",fontWeight:400,lineHeight:1.1,marginBottom:"8px"}}>{selectedJob.title}</h2>
-          <div style={{fontSize:"22px",color:"#888",fontFamily:displayFont,marginBottom:"60px"}}>{selectedJob.salary}</div>
-          {[["The Role",selectedJob.description,"p"],["Your Responsibilities",selectedJob.responsibilities,"ol"],["What We're Looking For",selectedJob.requirements,"ol"],["Nice to Have",selectedJob.niceToHave,"+"]].map(([t,items,type])=><div key={t} style={{marginBottom:"48px"}}><div style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.2em",color:"#555",marginBottom:"20px"}}>{t}</div>{type==="p"?items.map((p,i)=><p key={i} style={{fontSize:"15px",lineHeight:1.75,color:"#BBB",fontFamily:displayFont,marginBottom:"16px"}}>{p}</p>):<ol style={{listStyle:"none",padding:0}}>{items.map((r,i)=><li key={i} style={{fontSize:"14px",lineHeight:1.7,color:"#BBB",fontFamily:displayFont,padding:"6px 0 6px 20px",position:"relative"}}><span style={{position:"absolute",left:0,color:"#333"}}>{type==="+"?"+":i+1+"."}</span>{r}</li>)}</ol>}</div>)}
-          <button style={{...S.primaryBtn,maxWidth:"320px"}} onClick={startApply}>Apply for this Role →</button>
+      {selectedJob&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:200,display:"flex",pointerEvents:detailOpen?"all":"none",flexDirection:isMobile?"column":"row"}}>
+        {!isMobile&&<div style={{width:"45%",background:"#060606",transition:"opacity 0.5s",opacity:detailOpen?1:0,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{fontFamily:displayFont,fontSize:"64px",color:"rgba(255,255,255,0.03)"}}>K</div></div>}
+        <div style={{width:isMobile?"100%":"55%",height:isMobile?"100%":"auto",background:"#0F0F0F",overflowY:"auto",transform:detailOpen?"translateX(0)":isMobile?"translateY(100%)":"translateX(100%)",transition:"transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94)",padding:isMobile?"24px 20px 80px":"40px 60px 80px",position:"relative"}}>
+          <button style={{position:"absolute",top:"20px",right:"20px",background:"none",border:"1px solid rgba(255,255,255,0.2)",color:"#E8E8E3",width:"40px",height:"40px",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:"18px",zIndex:10,fontFamily:font}} onClick={closeJob}>✕</button>
+          {!isMobile&&<button style={{position:"absolute",top:"24px",right:"80px",background:"none",border:"1px solid rgba(255,255,255,0.3)",color:"#E8E8E3",padding:"12px 28px",cursor:"pointer",fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:font,zIndex:10}} onClick={startApply}>{appStatus&&appStatus.status!=="WITHDRAWN"?"View Application":"Apply for Role ↓"}</button>}
+          <div style={{fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.15em",color:"#888",marginBottom:isMobile?"24px":"48px",display:"flex",gap:"24px",marginTop:isMobile?"48px":"0"}}><span>{selectedJob.location}</span><span>{selectedJob.department}</span></div>
+          <h2 style={{fontFamily:displayFont,fontSize:isMobile?"28px":"42px",fontWeight:400,lineHeight:1.1,marginBottom:"8px"}}>{selectedJob.title}</h2>
+          <div style={{fontSize:isMobile?"18px":"22px",color:"#888",fontFamily:displayFont,marginBottom:isMobile?"32px":"60px"}}>{selectedJob.salary}</div>
+          {[["The Role",selectedJob.description,"p"],["Your Responsibilities",selectedJob.responsibilities,"ol"],["What We're Looking For",selectedJob.requirements,"ol"],["Nice to Have",selectedJob.niceToHave,"+"]].map(([t,items,type])=><div key={t} style={{marginBottom:isMobile?"32px":"48px"}}><div style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.2em",color:"#555",marginBottom:"20px"}}>{t}</div>{type==="p"?items.map((p,i)=><p key={i} style={{fontSize:"15px",lineHeight:1.75,color:"#BBB",fontFamily:displayFont,marginBottom:"16px"}}>{p}</p>):<ol style={{listStyle:"none",padding:0}}>{items.map((r,i)=><li key={i} style={{fontSize:"14px",lineHeight:1.7,color:"#BBB",fontFamily:displayFont,padding:"6px 0 6px 20px",position:"relative"}}><span style={{position:"absolute",left:0,color:"#333"}}>{type==="+"?"+":i+1+"."}</span>{r}</li>)}</ol>}</div>)}
+          <button style={{...S.primaryBtn,maxWidth:"320px"}} onClick={startApply}>{appStatus&&appStatus.status!=="WITHDRAWN"?"View Application Status →":"Apply for this Role →"}</button>
         </div>
       </div>}
 
-      {/* AUTH — INLINED */}
-      {(page==="signup"||page==="signin")&&<div style={{minHeight:"100vh",display:"flex"}}>
-        <div style={{width:"45%",background:"#060606",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",padding:"60px"}}><div style={{fontFamily:displayFont,fontSize:"48px",color:"#E8E8E3",marginBottom:"16px",letterSpacing:"-0.03em"}}>Kotak</div><div style={{fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.2em",color:"#444"}}>Quantitative Trading Division</div></div>
-        <div style={{width:"55%",background:"#0F0F0F",display:"flex",flexDirection:"column",justifyContent:"center",padding:"60px 80px"}}>
+      {/* AUTH */}
+      {(page==="signup"||page==="signin")&&<div style={{minHeight:"100vh",display:"flex",flexDirection:isMobile?"column":"row"}}>
+        {!isMobile&&<div style={{width:"45%",background:"#060606",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",padding:"60px"}}><div style={{fontFamily:displayFont,fontSize:"48px",color:"#E8E8E3",marginBottom:"16px",letterSpacing:"-0.03em"}}>Kotak</div><div style={{fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.2em",color:"#444"}}>Quantitative Trading Division</div></div>}
+        <div style={{width:isMobile?"100%":"55%",background:"#0F0F0F",display:"flex",flexDirection:"column",justifyContent:"center",padding:isMobile?"80px 24px 40px":"60px 80px"}}>
+          {isMobile&&<div style={{marginBottom:"40px"}}><div style={{fontFamily:displayFont,fontSize:"28px",color:"#E8E8E3",marginBottom:"8px"}}>Kotak</div><div style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.2em",color:"#444"}}>Quantitative Trading Division</div></div>}
           {page==="signup"&&verifyStep?<>
-            <h2 style={{fontFamily:displayFont,fontSize:"36px",fontWeight:400,marginBottom:"12px"}}>Verify Email</h2>
+            <h2 style={{fontFamily:displayFont,fontSize:isMobile?"28px":"36px",fontWeight:400,marginBottom:"12px"}}>Verify Email</h2>
             <p style={{fontSize:"14px",color:"#888",marginBottom:"48px",fontFamily:displayFont}}>Code sent to <strong style={{color:"#E8E8E3"}}>{authForm.email}</strong></p>
             <div style={S.inputGroup}><label style={S.inputLabel}>Verification Code</label><input style={{...S.input,fontSize:"24px",letterSpacing:"0.5em",textAlign:"center"}} value={otpCode} onChange={e=>setOtpCode(e.target.value.replace(/\D/g,"").slice(0,6))} placeholder="000000" maxLength={6} autoFocus/></div>
             {authError&&<div style={S.errorText}>{authError}</div>}
             <button style={{...S.primaryBtn,opacity:otpCode.length===6?1:0.3}} onClick={verifyAndCreate} disabled={otpCode.length!==6}>Verify & Create Account</button>
             <Spacer h={16}/><div style={{display:"flex",gap:"16px"}}><button style={S.link} onClick={()=>{setVerifyStep(false);setOtpCode("");setAuthError("");}}>← Back</button><button style={S.link} onClick={sendOtp}>Resend</button></div>
           </>:<>
-            <h2 style={{fontFamily:displayFont,fontSize:"36px",fontWeight:400,marginBottom:"12px"}}>{page==="signup"?"Create Account":"Welcome Back"}</h2>
-            <p style={{fontSize:"14px",color:"#888",marginBottom:"48px",fontFamily:displayFont}}>{page==="signup"?"Start your application.":"Sign in to continue."}</p>
+            <h2 style={{fontFamily:displayFont,fontSize:isMobile?"28px":"36px",fontWeight:400,marginBottom:"12px"}}>{page==="signup"?"Create Account":"Welcome Back"}</h2>
+            <p style={{fontSize:"14px",color:"#888",marginBottom:"40px",fontFamily:displayFont}}>{page==="signup"?"Start your application.":"Sign in with email or phone."}</p>
             {page==="signup"&&<div style={S.inputGroup}><label style={S.inputLabel}>Full Name</label><input style={S.input} value={authForm.name} onChange={e=>setAuthForm(p=>({...p,name:e.target.value}))} placeholder="John Doe"/></div>}
-            <div style={S.inputGroup}><label style={S.inputLabel}>Email</label><input style={S.input} type="email" value={authForm.email} onChange={e=>setAuthForm(p=>({...p,email:e.target.value}))} placeholder="john@example.com"/></div>
+            <div style={S.inputGroup}><label style={S.inputLabel}>{page==="signin"?"Email or Phone Number":"Email"}</label><input style={S.input} value={authForm.email} onChange={e=>setAuthForm(p=>({...p,email:e.target.value}))} placeholder={page==="signin"?"john@example.com or +91XXXXXXXXXX":"john@example.com"}/></div>
             {page==="signup"&&<div style={S.inputGroup}><label style={S.inputLabel}>Phone</label><input style={S.input} value={authForm.phone} onChange={e=>setAuthForm(p=>({...p,phone:e.target.value}))} placeholder="+91-XXXXXXXXXX"/></div>}
             <div style={S.inputGroup}><label style={S.inputLabel}>Password</label><input style={S.input} type="password" value={authForm.password} onChange={e=>setAuthForm(p=>({...p,password:e.target.value}))} placeholder="••••••••"/></div>
             {page==="signup"&&<div style={S.inputGroup}><label style={S.inputLabel}>Confirm Password</label><input style={S.input} type="password" value={authForm.confirmPassword} onChange={e=>setAuthForm(p=>({...p,confirmPassword:e.target.value}))} placeholder="••••••••"/></div>}
@@ -318,18 +347,18 @@ export default function App() {
       </div>}
 
       {/* APPLICATION */}
-      {page==="apply"&&<div style={{minHeight:"100vh",display:"flex"}}>
-        <div style={{width:"45%",background:"#060606",display:"flex",flexDirection:"column",justifyContent:"center",padding:"60px",position:"sticky",top:0,height:"100vh"}}>
+      {page==="apply"&&<div style={{minHeight:"100vh",display:"flex",flexDirection:isMobile?"column":"row"}}>
+        {!isMobile&&<div style={{width:"45%",background:"#060606",display:"flex",flexDirection:"column",justifyContent:"center",padding:"60px",position:"sticky",top:0,height:"100vh"}}>
           <div style={{fontFamily:displayFont,fontSize:"32px",marginBottom:"16px"}}>AI Engineer</div>
           <div style={{fontSize:"14px",color:"#555",fontFamily:displayFont,marginBottom:"40px"}}>Quantitative Finance · Mumbai</div>
           {STEPS.map((s,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:"16px",padding:"12px 0",opacity:i<=appStep?1:0.3}}><span style={{fontSize:"11px",color:i<appStep?"#10B981":i===appStep?"#E8E8E3":"#333",minWidth:"20px"}}>{i<appStep?"✓":String(i+1).padStart(2,"0")}</span><span style={{fontSize:"13px",color:i===appStep?"#E8E8E3":"#666"}}>{s}</span></div>)}
-        </div>
-        <div style={{width:"55%",background:"#0F0F0F",padding:"100px 60px 60px",overflowY:"auto"}}>
+        </div>}
+        <div style={{width:isMobile?"100%":"55%",background:"#0F0F0F",padding:isMobile?"80px 24px 40px":"100px 60px 60px",overflowY:"auto"}}>
           <div style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.2em",color:"#555",marginBottom:"8px"}}>Step {String(appStep+1).padStart(2,"0")} of {String(STEPS.length).padStart(2,"0")} — {STEPS[appStep]}</div>
           <div style={{display:"flex",gap:"4px",marginBottom:"48px"}}>{STEPS.map((_,i)=><div key={i} style={S.stepDot(i===appStep,i<appStep)}/>)}</div>
 
           {appStep===0&&<div>
-            <h3 style={{fontFamily:displayFont,fontSize:"28px",marginBottom:"32px",fontWeight:400}}>Personal Information</h3>
+            <h3 style={{fontFamily:displayFont,fontSize:isMobile?"24px":"28px",marginBottom:"32px",fontWeight:400}}>Personal Information</h3>
             <div style={S.inputGroup}><label style={S.inputLabel}>Name</label><input style={{...S.input,opacity:0.5}} value={user?.name||""} disabled/></div>
             <div style={S.inputGroup}><label style={S.inputLabel}>Email</label><input style={{...S.input,opacity:0.5}} value={user?.email||""} disabled/></div>
             <div style={S.inputGroup}><label style={S.inputLabel}>Education</label><select style={S.select} value={appData.education} onChange={e=>setAppData(p=>({...p,education:e.target.value}))}><option value="">Select</option>{EDUCATION_OPTIONS.map(o=><option key={o}>{o}</option>)}</select></div>
@@ -338,7 +367,7 @@ export default function App() {
           </div>}
 
           {appStep===1&&<div>
-            <h3 style={{fontFamily:displayFont,fontSize:"28px",marginBottom:"32px",fontWeight:400}}>Technical Questions</h3>
+            <h3 style={{fontFamily:displayFont,fontSize:isMobile?"24px":"28px",marginBottom:"32px",fontWeight:400}}>Technical Questions</h3>
             <div style={S.inputGroup}><label style={S.inputLabel}>AI/ML Project</label><p style={{fontSize:"13px",color:"#888",marginBottom:"12px",lineHeight:1.6}}>Describe your most impactful AI/ML project — architecture, dataset, challenges, outcomes.</p><textarea style={S.textarea} value={appData.aiAnswer} onChange={e=>setAppData(p=>({...p,aiAnswer:e.target.value}))}/><div style={{fontSize:"11px",color:appData.aiAnswer.length>=50?"#555":"#EF4444",textAlign:"right",marginTop:"4px"}}>{appData.aiAnswer.length} (min 50)</div></div>
             <div style={S.inputGroup}><label style={S.inputLabel}>Quant Strategy</label><p style={{fontSize:"13px",color:"#888",marginBottom:"12px",lineHeight:1.6}}>Explain a quant trading strategy — what inefficiency does it exploit?</p><textarea style={S.textarea} value={appData.quantAnswer} onChange={e=>setAppData(p=>({...p,quantAnswer:e.target.value}))}/><div style={{fontSize:"11px",color:appData.quantAnswer.length>=50?"#555":"#EF4444",textAlign:"right",marginTop:"4px"}}>{appData.quantAnswer.length} (min 50)</div></div>
             <div style={S.inputGroup}><label style={S.inputLabel}>HFT Familiarity</label><select style={S.select} value={appData.hftLevel} onChange={e=>setAppData(p=>({...p,hftLevel:e.target.value}))}><option value="">Select</option>{HFT_OPTIONS.map(o=><option key={o}>{o}</option>)}</select></div>
@@ -347,30 +376,30 @@ export default function App() {
           </div>}
 
           {appStep===2&&<div>
-            <h3 style={{fontFamily:displayFont,fontSize:"28px",marginBottom:"32px",fontWeight:400}}>Upload Resume</h3>
-            {!appData.resumeFile?<div style={{border:`2px dashed ${dragOver?"rgba(255,255,255,0.3)":"rgba(255,255,255,0.08)"}`,padding:"60px 40px",textAlign:"center",cursor:"pointer",background:dragOver?"rgba(255,255,255,0.02)":"transparent"}} onDragOver={e=>{e.preventDefault();setDragOver(true);}} onDragLeave={()=>setDragOver(false)} onDrop={e=>{e.preventDefault();setDragOver(false);handleFile(e.dataTransfer.files[0]);}} onClick={()=>fileRef.current?.click()}>
+            <h3 style={{fontFamily:displayFont,fontSize:isMobile?"24px":"28px",marginBottom:"32px",fontWeight:400}}>Upload Resume</h3>
+            {!appData.resumeFile?<div style={{border:`2px dashed ${dragOver?"rgba(255,255,255,0.3)":"rgba(255,255,255,0.08)"}`,padding:isMobile?"40px 20px":"60px 40px",textAlign:"center",cursor:"pointer",background:dragOver?"rgba(255,255,255,0.02)":"transparent"}} onDragOver={e=>{e.preventDefault();setDragOver(true);}} onDragLeave={()=>setDragOver(false)} onDrop={e=>{e.preventDefault();setDragOver(false);handleFile(e.dataTransfer.files[0]);}} onClick={()=>fileRef.current?.click()}>
               <input ref={fileRef} type="file" accept=".pdf" style={{display:"none"}} onChange={e=>handleFile(e.target.files[0])}/>
               <div style={{fontSize:"32px",marginBottom:"16px",opacity:0.3}}>↑</div><div style={{fontSize:"15px",fontFamily:displayFont,marginBottom:"8px"}}>Drop your resume here</div><div style={{fontSize:"12px",color:"#555"}}>PDF only · Max 10MB</div>
-            </div>:<div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:"16px"}}><span style={{fontSize:"24px",opacity:0.5}}>📄</span><div><div style={{fontSize:"14px"}}>{appData.resumeName}</div><div style={{fontSize:"12px",color:"#555"}}>{(appData.resumeFile.size/1024).toFixed(0)} KB</div></div></div><button style={{...S.link,color:"#EF4444"}} onClick={()=>setAppData(p=>({...p,resumeFile:null,resumeName:""}))}>Remove</button></div>}
+            </div>:<div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"12px"}}><div style={{display:"flex",alignItems:"center",gap:"16px"}}><span style={{fontSize:"24px",opacity:0.5}}>📄</span><div><div style={{fontSize:"14px"}}>{appData.resumeName}</div><div style={{fontSize:"12px",color:"#555"}}>{(appData.resumeFile.size/1024).toFixed(0)} KB</div></div></div><button style={{...S.link,color:"#EF4444"}} onClick={()=>setAppData(p=>({...p,resumeFile:null,resumeName:""}))}>Remove</button></div>}
           </div>}
 
           {appStep===3&&<GameSection scores={gameScores} setScores={setGameScores} phase={gamePhase} setPhase={setGamePhase}/>}
 
           {appStep===4&&!submitted&&<div>
-            <h3 style={{fontFamily:displayFont,fontSize:"28px",marginBottom:"32px",fontWeight:400}}>Review & Submit</h3>
-            {[["Personal",`${user?.name} · ${user?.email} · ${appData.education} · ${appData.experience}`],["Technical",`AI/ML: ${appData.aiAnswer.slice(0,80)}... · HFT: ${appData.hftLevel} · Skills: ${appData.techStack.join(", ")}`],["Resume",appData.resumeName||"None"],["Assessment","All 3 challenges completed"]].map(([l,v])=><div key={l} style={{borderTop:"1px solid rgba(255,255,255,0.06)",padding:"20px 0"}}><div style={S.sectionLabel}>{l}</div><div style={{fontSize:"13px",color:"#AAA",lineHeight:1.7}}>{v}</div></div>)}
+            <h3 style={{fontFamily:displayFont,fontSize:isMobile?"24px":"28px",marginBottom:"32px",fontWeight:400}}>Review & Submit</h3>
+            {[["Personal",`${user?.name} · ${user?.email} · ${appData.education} · ${appData.experience}`],["Technical",`AI/ML: ${appData.aiAnswer.slice(0,80)}... · HFT: ${appData.hftLevel} · Skills: ${appData.techStack.join(", ")}`],["Resume",appData.resumeName||"None"],["Assessment","All 3 challenges completed"]].map(([l,v])=><div key={l} style={{borderTop:"1px solid rgba(255,255,255,0.06)",padding:"20px 0"}}><div style={S.sectionLabel}>{l}</div><div style={{fontSize:"13px",color:"#AAA",lineHeight:1.7,wordBreak:"break-word"}}>{v}</div></div>)}
             <Spacer h={24}/><button style={{...S.primaryBtn,opacity:submitting?0.5:1}} onClick={submit} disabled={submitting}>{submitting?"Submitting...":"Submit Application →"}</button>
           </div>}
 
-          {appStep===4&&submitted&&<div style={{textAlign:"center",paddingTop:"60px"}}>
+          {appStep===4&&submitted&&<div style={{textAlign:"center",paddingTop:"40px"}}>
             <div style={{fontSize:"48px",marginBottom:"24px"}}>✓</div>
-            <h3 style={{fontFamily:displayFont,fontSize:"32px",marginBottom:"12px",fontWeight:400}}>Application Submitted</h3>
+            <h3 style={{fontFamily:displayFont,fontSize:"28px",marginBottom:"12px",fontWeight:400}}>Application Submitted</h3>
             <div style={{fontSize:"14px",color:"#888",fontFamily:displayFont,marginBottom:"32px"}}>We'll notify you by email.</div>
-            <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",padding:"20px",display:"inline-block",marginBottom:"32px"}}><div style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.2em",color:"#555",marginBottom:"8px"}}>Application ID</div><div style={{fontSize:"18px",fontFamily:font}}>{applicationId}</div></div>
+            <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",padding:"20px",display:"inline-block",marginBottom:"32px"}}><div style={{fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.2em",color:"#555",marginBottom:"8px"}}>Application ID</div><div style={{fontSize:isMobile?"14px":"18px",fontFamily:font}}>{applicationId}</div></div>
             <br/><button style={{...S.primaryBtn,maxWidth:"280px",display:"inline-block"}} onClick={()=>setPage("status")}>View Status →</button>
           </div>}
 
-          {appStep<4&&!submitted&&<div style={{display:"flex",justifyContent:"space-between",marginTop:"40px"}}>
+          {appStep<4&&!submitted&&<div style={{display:"flex",justifyContent:"space-between",marginTop:"40px",gap:"16px"}}>
             {appStep>0?<button style={S.link} onClick={()=>{if(appStep===3&&gamePhase!=="intro")setGamePhase("intro");else setAppStep(s=>s-1);}}>← Back</button>:<div/>}
             <button style={{...S.primaryBtn,width:"auto",padding:"14px 40px",opacity:canNext()?1:0.3}} disabled={!canNext()} onClick={()=>setAppStep(s=>s+1)}>Continue →</button>
           </div>}
@@ -380,22 +409,36 @@ export default function App() {
       {/* STATUS */}
       {page==="status"&&(()=>{
         const steps=["Submitted","Under Review","Assessment","Decision","Outcome"];
-        const sm={PROCESSING:1,UNDER_REVIEW:2,SHORTLISTED:4,REJECTED:4};
-        const cs=sm[appStatus?.status]||1;
-        const msgs={PROCESSING:"Your application is being processed.",SHORTLISTED:"Congratulations! You've been shortlisted.",UNDER_REVIEW:"Under detailed review.",REJECTED:"We've moved forward with other candidates."};
-        return <div style={{minHeight:"100vh",paddingTop:"120px"}}><div style={{maxWidth:"800px",margin:"0 auto",padding:"0 40px"}}>
+        const sm={PROCESSING:1,UNDER_REVIEW:2,SHORTLISTED:4,REJECTED:4,WITHDRAWN:0};
+        const cs=sm[appStatus?.status]??1;
+        const msgs={PROCESSING:"Your application is being processed.",SHORTLISTED:"Congratulations! You've been shortlisted.",UNDER_REVIEW:"Under detailed review.",REJECTED:"We've moved forward with other candidates.",WITHDRAWN:"You have withdrawn your application."};
+        const isWithdrawn = appStatus?.status === "WITHDRAWN";
+        return <div style={{minHeight:"100vh",paddingTop:isMobile?"100px":"120px"}}><div style={{maxWidth:"800px",margin:"0 auto",padding:`0 ${mp}`}}>
           <div style={S.sectionLabel}>Application Status</div>
-          <h2 style={{fontFamily:displayFont,fontSize:"36px",fontWeight:400,marginBottom:"8px"}}>{appStatus?.position||"AI Engineer"}</h2>
+          <h2 style={{fontFamily:displayFont,fontSize:isMobile?"28px":"36px",fontWeight:400,marginBottom:"8px"}}>{appStatus?.position||"AI Engineer"}</h2>
           <div style={{fontSize:"13px",color:"#555",marginBottom:"48px"}}>ID: {appStatus?.applicationId||"—"}</div>
-          <div style={{display:"flex",alignItems:"center",margin:"40px 0",flexWrap:"wrap"}}>{steps.map((s,i)=><div key={s} style={{display:"flex",alignItems:"center"}}><div style={S.pStep(i<cs?"done":i===cs?"now":"wait")}><span>{i<cs?"✓":String(i+1).padStart(2,"0")}</span><span>{s}</span></div>{i<steps.length-1&&<div style={S.pLine(i<cs)}/>}</div>)}</div>
+          {!isWithdrawn&&<div style={{display:"flex",alignItems:"center",margin:"40px 0",flexWrap:"wrap",gap:isMobile?"4px":"0"}}>{steps.map((s,i)=><div key={s} style={{display:"flex",alignItems:"center"}}><div style={S.pStep(i<cs?"done":i===cs?"now":"wait")}><span>{i<cs?"✓":String(i+1).padStart(2,"0")}</span>{!isMobile&&<span>{s}</span>}</div>{i<steps.length-1&&!isMobile&&<div style={S.pLine(i<cs)}/>}</div>)}</div>}
+          {isMobile&&!isWithdrawn&&<div style={{fontSize:"12px",color:"#888",marginBottom:"16px"}}>Step {cs+1} of {steps.length}: {steps[cs]||"Complete"}</div>}
           <Spacer h={32}/>
-          <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",padding:"32px"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:"20px"}}><div style={S.sectionLabel}>Status</div><div style={S.badge(appStatus?.status||"PROCESSING")}>{(appStatus?.status||"PROCESSING").replace("_"," ")}</div></div><p style={{fontSize:"15px",color:"#AAA",lineHeight:1.7,fontFamily:displayFont}}>{msgs[appStatus?.status]||msgs.PROCESSING}</p></div>
-          {appStatus?.gameScores&&<><Spacer h={32}/><div style={S.sectionLabel}>Assessment</div><div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",padding:"20px"}}><span style={{fontSize:"13px",color:"#888"}}>Cognitive assessment completed</span></div></>}
+          <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",padding:isMobile?"24px":"32px"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:"20px",flexWrap:"wrap",gap:"12px"}}><div style={S.sectionLabel}>Status</div><div style={S.badge(appStatus?.status||"PROCESSING")}>{(appStatus?.status||"PROCESSING").replace("_"," ")}</div></div><p style={{fontSize:"15px",color:"#AAA",lineHeight:1.7,fontFamily:displayFont}}>{msgs[appStatus?.status]||msgs.PROCESSING}</p></div>
+          {appStatus?.gameScores&&!isWithdrawn&&<><Spacer h={32}/><div style={S.sectionLabel}>Assessment</div><div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",padding:"20px"}}><span style={{fontSize:"13px",color:"#888"}}>Cognitive assessment completed</span></div></>}
+          {!isWithdrawn&&appStatus?.status!=="REJECTED"&&appStatus?.status!=="SHORTLISTED"&&<>
+            <Spacer h={40}/>
+            {!withdrawConfirm?<button style={S.dangerBtn} onClick={()=>setWithdrawConfirm(true)}>Withdraw Application</button>
+            :<div style={{background:"rgba(239,68,68,0.05)",border:"1px solid rgba(239,68,68,0.2)",padding:isMobile?"24px":"32px"}}>
+              <p style={{fontSize:"14px",color:"#CCC",fontFamily:displayFont,marginBottom:"20px",lineHeight:1.6}}>Are you sure you want to withdraw your application? This action cannot be undone.</p>
+              <div style={{display:"flex",gap:"12px",flexWrap:"wrap"}}>
+                <button style={{...S.dangerBtn,width:"auto",padding:"12px 32px"}} onClick={withdrawApplication}>Yes, Withdraw</button>
+                <button style={{...S.primaryBtn,width:"auto",padding:"12px 32px",marginTop:0}} onClick={()=>setWithdrawConfirm(false)}>Cancel</button>
+              </div>
+            </div>}
+          </>}
+          {isWithdrawn&&<><Spacer h={40}/><button style={S.primaryBtn} onClick={()=>{setAppStatus(null);setSubmitted(false);setAppStep(0);setGamePhase("intro");setGameScores({pattern:0,math:0,debug:0});setAppData({education:"",experience:"",source:"",aiAnswer:"",quantAnswer:"",hftLevel:"",techStack:[],extraInfo:"",resumeFile:null,resumeName:""});setPage("home");}}>Browse Open Roles →</button></>}
         </div></div>;
       })()}
 
       {/* FOOTER */}
-      {!["signup","signin","apply","status"].includes(page)&&<div style={{padding:"60px 40px",borderTop:"1px solid rgba(255,255,255,0.04)",marginTop:"40px"}}><div style={{display:"flex",justifyContent:"space-between"}}><div><div style={{fontFamily:displayFont,fontSize:"20px",marginBottom:"8px"}}>Kotak Quantitative Trading</div><div style={{fontSize:"12px",color:"#444"}}>Mumbai, India</div></div><div style={{fontSize:"11px",color:"#333"}}>© 2026</div></div></div>}
+      {!["signup","signin","apply","status"].includes(page)&&<div style={{padding:`60px ${mp}`,borderTop:"1px solid rgba(255,255,255,0.04)",marginTop:"40px"}}><div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:"16px"}}><div><div style={{fontFamily:displayFont,fontSize:"20px",marginBottom:"8px"}}>Kotak Quantitative Trading</div><div style={{fontSize:"12px",color:"#444"}}>Mumbai, India</div></div><div style={{fontSize:"11px",color:"#333"}}>© 2026</div></div></div>}
     </div>
   );
 }
